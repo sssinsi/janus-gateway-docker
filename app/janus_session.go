@@ -12,6 +12,7 @@ import (
 
 type JanusSession struct {
 	Transaction string
+	ID          Data.ID
 }
 
 const letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
@@ -57,5 +58,6 @@ func (s *JanusSession) New() *JanusResponse {
 	if err := json.Unmarshal(body, &response); err != nil {
 		panic(err)
 	}
+	s.ID = response.Data.ID
 	return response
 }
