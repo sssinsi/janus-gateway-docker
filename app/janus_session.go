@@ -1,63 +1,40 @@
 package main
 
 import (
-	"bytes"
 	"encoding/json"
-	"fmt"
-	"io/ioutil"
-	"net/http"
-
-	"github.com/golang/go/src/math/rand"
+	"strconv"
 )
 
 type JanusSession struct {
-	Transaction string
-	ID          Data.ID
+	ID      int `json:"id"`
+	gateway *JanusGateway
 }
 
-const letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
-
-func randomString(n int) string {
-	b := make([]byte, n)
-	for i := range b {
-		b[i] = letters[rand.Intn(len(letters))]
-	}
-	return string(b)
+func (s *JanusSession) Send(v *JanusRequest) []byte {
+	url := BaseURL + "/" + strconv.Itoa(s.ID)
+	return s.gateway.Send(url, v)
 }
 
-func NewJanusSession(n int) *JanusSession {
-	return &JanusSession{
-		Transaction: randomString(n),
-	}
+func (s *JanusSession) NewRoom() *JanusHandle {
+	plugin := "janus.plugin.videoroom"
+	return s.Attach(plugin)
 }
 
-func (s *JanusSession) New() *JanusResponse {
-	req := &JanusRequest{
-		Janus:       "create",
-		Transaction: s.Transaction,
+func (s *JanusSession) Attach(plugin string) *JanusHandle {
+	v := &JanusRequest{
+		Janus:       "attach",
+		Transaction: randomString(12),
+		Plugin:      plugin,
+		OpaqueID:    "videoroomtest-" + randomString(12),
 	}
-	jsonValue, _ := json.Marshal(req)
-	res, err := http.Post(
-		"http://localhost:8088/janus",
-		"application/json",
-		bytes.NewBuffer(jsonValue))
 
-	if err != nil {
+	body := s.Send(v)
+	var r *JanusResponse
+	if err := json.Unmarshal(body, &r); err != nil {
 		panic(err)
 	}
-	defer res.Body.Close()
-
-	body, err := ioutil.ReadAll(res.Body)
-
-	if err != nil {
-		panic(err)
+	return &JanusHandle{
+		ID:      r.Data.ID,
+		session: s,
 	}
-
-	fmt.Println(string(body))
-	var response *JanusResponse
-	if err := json.Unmarshal(body, &response); err != nil {
-		panic(err)
-	}
-	s.ID = response.Data.ID
-	return response
 }

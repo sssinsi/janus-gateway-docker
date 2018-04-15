@@ -2,10 +2,13 @@ package main
 
 import "fmt"
 
-func main() {
-	session := NewJanusSession(12)
-	fmt.Println(session)
+const BaseURL = "http://localhost:8088/janus"
 
-	r := session.New()
-	fmt.Println(r)
+func main() {
+	g := NewJanusGateway(12)
+
+	s := g.NewSession()
+
+	h := s.NewRoom()
+	fmt.Println(h.ID)
 }
