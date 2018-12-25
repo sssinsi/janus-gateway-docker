@@ -1,0 +1,4 @@
+curl -H "Content-Type: application/json" \
+    -X POST \
+    -d '{"janus" : "create","transaction" : "Iddi2disodiks"}' \
+    http://localhost:8088/janus
